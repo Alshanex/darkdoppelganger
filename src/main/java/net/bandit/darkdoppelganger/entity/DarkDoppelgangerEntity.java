@@ -13,11 +13,12 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
+import net.minecraft.world.entity.ai.goal.*;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.LargeFireball;
@@ -38,7 +39,7 @@ public class DarkDoppelgangerEntity extends PathfinderMob {
     public DarkDoppelgangerEntity(EntityType<? extends PathfinderMob> type, Level world) {
         super(type, world);
         this.setCustomName(Component.literal("Dark Doppelganger"));
-
+        this.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, Integer.MAX_VALUE, 0, false, false));
         // Create the boss bar with the name of the entity and color
         this.bossEvent = new ServerBossEvent(Component.literal("Dark Doppelganger"), ServerBossEvent.BossBarColor.PURPLE, ServerBossEvent.BossBarOverlay.PROGRESS);
     }
@@ -229,6 +230,9 @@ public class DarkDoppelgangerEntity extends PathfinderMob {
     protected void registerGoals() {
         this.goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.2D, false));
         this.targetSelector.addGoal(1, new NearestAttackableTargetGoal<>(this, Player.class, true));
+        this.goalSelector.addGoal(1, new LeapAtTargetGoal(this, 1F));
+        this.goalSelector.addGoal(4, new RandomStrollGoal(this, 1.0));
+        this.goalSelector.addGoal(7, new MoveTowardsTargetGoal(this, 1.2D, 48.0F));
     }
 
     @Override
@@ -241,7 +245,7 @@ public class DarkDoppelgangerEntity extends PathfinderMob {
         return Mob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 300.0)
                 .add(Attributes.ATTACK_DAMAGE, 7.0)
-                .add(Attributes.MOVEMENT_SPEED, 0.55)
+                .add(Attributes.MOVEMENT_SPEED, 0.45)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 0.5);
     }
 

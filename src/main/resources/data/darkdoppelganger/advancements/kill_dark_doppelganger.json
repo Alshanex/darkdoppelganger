@@ -3,18 +3,9 @@
     "kill": {
       "trigger": "minecraft:player_kills_entity",
       "conditions": {
-        "location": [
-          {
-            "condition": "minecraft:match_tool",
-            "predicate": {
-              "items": [
-                {
-                  "tag": "darkdoppelganger:weapons"
-                }
-              ]
-            }
-          }
-        ]
+        "entity": {
+          "type": "darkdoppelganger:dark_doppelganger"
+        }
       }
     }
   },
