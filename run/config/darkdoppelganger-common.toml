@@ -1,0 +1,20 @@
+#Health of the Dark Doppelganger
+#Range: 1.0 ~ 1000.0
+doppelganger_health = 300.0
+#Attack Damage of the Dark Doppelganger
+#Range: 1.0 ~ 50.0
+doppelganger_attack_damage = 15.0
+#Movement Speed of the Dark Doppelganger
+#Range: 0.1 ~ 1.0
+doppelganger_movement_speed = 0.35
+#Mainhand weapon of the Dark Doppelganger (e.g., 'netherite_sword')
+doppelganger_mainhand = "netherite_sword"
+#Helmet of the Dark Doppelganger (e.g., 'netherite_helmet')
+doppelganger_helmet = "netherite_helmet"
+#Chestplate of the Dark Doppelganger (e.g., 'netherite_chestplate')
+doppelganger_chestplate = "netherite_chestplate"
+#Leggings of the Dark Doppelganger (e.g., 'netherite_leggings')
+doppelganger_leggings = "netherite_leggings"
+#Boots of the Dark Doppelganger (e.g., 'netherite_boots')
+doppelganger_boots = "netherite_boots"
+

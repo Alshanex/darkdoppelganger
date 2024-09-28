@@ -1,0 +1,10 @@
+{
+  "boss_fight": {
+    "sounds": [
+      {
+        "name": "darkdoppelganger:music/boss_fight",
+        "stream": false
+      }
+    ]
+  }
+}
