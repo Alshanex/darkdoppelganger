@@ -32,7 +32,6 @@ public class DarkDoppelgangerRenderer extends LivingEntityRenderer<DarkDoppelgan
     }
     @Override
     public ResourceLocation getTextureLocation(DarkDoppelgangerEntity entity) {
-        // Always use the custom skin for the Dark Doppelganger entity and its clones
         return CUSTOM_SKIN;
     }
 }

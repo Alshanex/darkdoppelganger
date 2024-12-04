@@ -19,8 +19,17 @@ public class ModSounds {
     public static final RegistryObject<SoundEvent> BOSS_FIGHT_MUSIC = SOUND_EVENTS.register("boss_fight",
             () -> SoundEvent.createVariableRangeEvent(new ResourceLocation(DarkDoppelgangerMod.MOD_ID, "boss_fight")));
 
+    public static final RegistryObject<SoundEvent> BOSS_STUN = SOUND_EVENTS.register("boss_stun",
+            () -> SoundEvent.createVariableRangeEvent(new ResourceLocation(DarkDoppelgangerMod.MOD_ID, "boss_stun")));
+
+    public static final RegistryObject<SoundEvent> BOSS_LAUGH= SOUND_EVENTS.register("boss_laugh",
+            () -> SoundEvent.createVariableRangeEvent(new ResourceLocation(DarkDoppelgangerMod.MOD_ID, "boss_laugh")));
+
+    public static final RegistryObject<SoundEvent> BOSS_ROAR = SOUND_EVENTS.register("boss_roar",
+            () -> SoundEvent.createVariableRangeEvent(new ResourceLocation(DarkDoppelgangerMod.MOD_ID, "boss_roar")));
+
     // Method to register sound events
     public static void register(IEventBus eventBus) {
-        SOUND_EVENTS.register(eventBus);  // Register the sound events with the event bus
+        SOUND_EVENTS.register(eventBus);
     }
 }

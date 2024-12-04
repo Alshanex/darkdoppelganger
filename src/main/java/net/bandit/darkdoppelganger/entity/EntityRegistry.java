@@ -15,10 +15,10 @@ public class EntityRegistry {
     public static final RegistryObject<EntityType<DarkDoppelgangerEntity>> DARK_DOPPELGANGER =
             ENTITY_TYPES.register("dark_doppelganger",
                     () -> EntityType.Builder.of(DarkDoppelgangerEntity::new, MobCategory.MONSTER)
-                            .sized(0.6F, 1.8F) // Use player size
-                            .setTrackingRange(80)  // Increase tracking range
-                            .setUpdateInterval(3)  // Update more frequently
-                            .setShouldReceiveVelocityUpdates(true) // Enables movement updates
+                            .sized(0.6F, 1.8F)
+                            .setTrackingRange(80)
+                            .setUpdateInterval(3)
+                            .setShouldReceiveVelocityUpdates(true)
                             .build(DarkDoppelgangerMod.MOD_ID + ":dark_doppelganger"));
 
 }

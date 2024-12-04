@@ -11,7 +11,6 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
-import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModLoadingContext;
@@ -47,45 +46,35 @@ public class DarkDoppelgangerMod {
                     .build(MOD_ID + ":dark_doppelganger")
     );
 
+
     public DarkDoppelgangerMod() {
+        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Config.COMMON_CONFIG);
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
         modEventBus.addListener(this::commonSetup);
-        modEventBus.addListener(this::onEntityAttributeCreation);  // Register entity attributes
-        modEventBus.addListener(this::addCreative);  // Add items to creative tab
+        modEventBus.addListener(this::onEntityAttributeCreation);
+        modEventBus.addListener(this::addCreative);
 
-        // Register deferred registers
+
         BLOCKS.register(modEventBus);
         ITEMS.register(modEventBus);
         ItemRegistry.ITEMS.register(modEventBus);
         CREATIVE_MODE_TABS.register(modEventBus);
         ENTITY_TYPES.register(modEventBus);
         ModSounds.register(modEventBus);
-
-        // Register for server and client events
         MinecraftForge.EVENT_BUS.register(this);
-
-        // Register the config class
-        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Config.SPEC);
-
-        // Listen for config events (properly registering them)
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
     }
 
 
-    // Register the attributes for the Dark Doppelganger entity
     @SubscribeEvent
     public void onEntityAttributeCreation(EntityAttributeCreationEvent event) {
         event.put(DARK_DOPPELGANGER.get(), DarkDoppelgangerEntity.createAttributes().build());
     }
 
     private void addCreative(BuildCreativeModeTabContentsEvent event) {
-        // Add items to the creative tab when needed
-    }
-
-    @SubscribeEvent
-    public void onServerStarting(ServerStartingEvent event) {
+        // Add items to creative tab
     }
 
     @Mod.EventBusSubscriber(modid = MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
@@ -96,3 +85,4 @@ public class DarkDoppelgangerMod {
         }
     }
 }
+

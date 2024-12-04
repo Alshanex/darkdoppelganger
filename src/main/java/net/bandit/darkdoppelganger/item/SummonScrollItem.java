@@ -2,6 +2,7 @@ package net.bandit.darkdoppelganger.item;
 
 import net.bandit.darkdoppelganger.entity.DarkDoppelgangerEntity;
 import net.bandit.darkdoppelganger.entity.EntityRegistry;
+import net.bandit.darkdoppelganger.registry.ModSounds;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
@@ -95,7 +96,7 @@ public class SummonScrollItem extends Item {
 
         // Play summon sound
         serverWorld.playSound(null, player.getX(), player.getY(), player.getZ(),
-                SoundEvents.ENDER_DRAGON_GROWL, SoundSource.PLAYERS, 1.0F, 0.2F);
+                ModSounds.BOSS_LAUGH.get(), SoundSource.PLAYERS, 1.0F, 1.0F);
 
         // Add the entity to the world
         serverWorld.addFreshEntity(entity);
