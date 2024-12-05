@@ -47,6 +47,7 @@ public class DarkDoppelgangerEntity extends PathfinderMob {
     private int gravityPullCooldown = 300;
     private static final int MAX_MINIONS = 5;
     private static int currentMinionCount = 0;
+    private int laughCooldown = 800;
 
 
 
@@ -70,21 +71,22 @@ public class DarkDoppelgangerEntity extends PathfinderMob {
         super.onAddedToWorld();
         this.setPersistenceRequired();
 
-        if (!this.level().isClientSide) {
-            if (!this.isClone) {
-                stopAllMusic();
+        if (!this.level().isClientSide && !this.isClone) {
+            // Ensure all music is stopped first
+            stopAllMusic();
 
-                if (!musicPlaying) {
-                    this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
-                            ModSounds.BOSS_FIGHT_MUSIC.get(), SoundSource.MUSIC, 0.5F, 1.0F);
-                    musicPlaying = true;
-                }
-                adjustAttributesFromConfig();
+            // Play the boss music only after stopping all other sounds
+            if (!musicPlaying) {
+                this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
+                        ModSounds.BOSS_FIGHT_MUSIC.get(), SoundSource.MUSIC, 1.0F, 1.0F);
+                musicPlaying = true;
             }
+            adjustAttributesFromConfig();
         } else {
             spawnSummoningParticles();
         }
     }
+
     private void adjustAttributesFromConfig() {
         if (Config.DOPPELGANGER_HEALTH != null) {
             this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(Config.DOPPELGANGER_HEALTH.get());
@@ -127,7 +129,6 @@ public class DarkDoppelgangerEntity extends PathfinderMob {
             });
         }
     }
-
     private void stopMinecraftAmbientMusic() {
         if (!level().isClientSide && level().getServer() != null) {
             // Loop through all players on the server
@@ -170,6 +171,14 @@ public class DarkDoppelgangerEntity extends PathfinderMob {
         if (musicPlaying) {
             stopMinecraftAmbientMusic();
         }
+        if (!isClone && laughCooldown > 0) {
+            laughCooldown--;
+        }
+
+        if (this.getHealth() < this.getMaxHealth() * 0.3 && minionSummonCooldown <= 0) {
+            summonIllusionClones();
+            minionSummonCooldown = 400; // Reset cooldown
+        }
 
         // Phase triggers
         if (!secondPhaseTriggered && this.getHealth() < this.getMaxHealth() * 0.2) {
@@ -193,7 +202,7 @@ public class DarkDoppelgangerEntity extends PathfinderMob {
         if (thirdPhaseTriggered) {
             if (minionSummonCooldown-- <= 0) {
                 summonMinions();
-                minionSummonCooldown = 300;
+                minionSummonCooldown = 500;
             }
             if (lifeDrainCooldown-- <= 0) {
                 lifeDrainAttack();
@@ -201,18 +210,17 @@ public class DarkDoppelgangerEntity extends PathfinderMob {
             }
             if (levitationCooldown-- <= 0) {
                 levitationAttack();
-                levitationCooldown = 500;
+                levitationCooldown = 300;
             }
             if (meteorShowerCooldown-- <= 0) {
                 meteorShowerAttack();
-                meteorShowerCooldown = 400;
+                meteorShowerCooldown = 200;
             }
             if (gravityPullCooldown-- <= 0) {
                 gravitationalPull();
                 gravityPullCooldown = 300;
             }
         }
-        // Handle sound cooldowns
         if (roarSoundCooldown > 0) roarSoundCooldown--;
         if (laughSoundCooldown > 0) laughSoundCooldown--;
     }
@@ -224,6 +232,20 @@ public class DarkDoppelgangerEntity extends PathfinderMob {
         for (ServerPlayer player : level().getEntitiesOfClass(ServerPlayer.class, getBoundingBox().inflate(50))) {
             player.sendSystemMessage(Component.literal("The Dark Doppelganger has entered its Second Phase!").withStyle(ChatFormatting.DARK_PURPLE));
             player.playSound(ModSounds.BOSS_ROAR.get(), 1.0F, 1.0F);
+            player.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 60, 0));
+        }
+
+        level().explode(null, getX(), getY(), getZ(), 0.0F, Level.ExplosionInteraction.NONE);
+        level().addParticle(ParticleTypes.EXPLOSION_EMITTER, getX(), getY(), getZ(), 0, 0, 0);
+        for (int i = 0; i < 10; i++) {
+            double angle = Math.toRadians(i * 36);
+            double x = getX() + Math.cos(angle) * 10;
+            double z = getZ() + Math.sin(angle) * 10;
+            LightningBolt lightning = EntityType.LIGHTNING_BOLT.create(level());
+            if (lightning != null) {
+                lightning.moveTo(x, getY(), z);
+                level().addFreshEntity(lightning);
+            }
         }
     }
 
@@ -240,14 +262,22 @@ public class DarkDoppelgangerEntity extends PathfinderMob {
         for (Player player : level().players()) {
             player.getCooldowns().addCooldown(Items.TOTEM_OF_UNDYING, 60);
         }
+        level().addParticle(ParticleTypes.DRAGON_BREATH, getX(), getY(), getZ(), 0, 0, 0);
+//        createDangerZones();
 
-        teleportCooldown = 60;
-        shockwaveCooldown = 100;
+        teleportCooldown = 40;
+        shockwaveCooldown = 80;
         minionSummonCooldown = 150;
         lifeDrainCooldown = 200;
-        meteorShowerCooldown = 300;
+        meteorShowerCooldown = 200;
     }
-
+//    private void createDangerZones() {
+//        for (int i = 0; i < 3; i++) {
+//            BlockPos dangerPos = new BlockPos((int) (getX() + random.nextInt(10) - 5), (int) getY(), (int) (getZ() + random.nextInt(10) - 5));
+//            level().setBlock(dangerPos, Blocks.MAGMA_BLOCK.defaultBlockState(), 3);
+//            level().addParticle(ParticleTypes.LAVA, dangerPos.getX(), dangerPos.getY(), dangerPos.getZ(), 0, 0.1, 0);
+//        }
+//    }
     private void meteorShowerAttack() {
         // Enhanced meteor shower with explosions, lightning, and fire
         for (int i = 0; i < 6; i++) {
@@ -325,18 +355,32 @@ public class DarkDoppelgangerEntity extends PathfinderMob {
         level().playSound(null, getX(), getY(), getZ(), ModSounds.BOSS_ROAR.get(), SoundSource.HOSTILE, 1.0F, 0.5F);
         gravityPullCooldown = 400; // Reset cooldown
     }
-
-
     private void shadowTeleport() {
         if (getTarget() != null && !level().isClientSide) {
             teleportTo(getTarget().getX(), getTarget().getY(), getTarget().getZ());
-            // Play laugh sound only if cooldown is over
-            if (laughSoundCooldown <= 0) {
-                level().playSound(null, getX(), getY(), getZ(), ModSounds.BOSS_LAUGH.get(), SoundSource.HOSTILE, 1.0F, 1.0F);
-                laughSoundCooldown = 300; // Reset cooldown
+            level().playSound(null, getX(), getY(), getZ(), ModSounds.BOSS_LAUGH.get(), SoundSource.HOSTILE, 0.0F, 1.0F);
+
+            for (int i = 0; i < 10; i++) {
+                level().addParticle(ParticleTypes.SMOKE, getX() + random.nextDouble() - 0.5, getY(), getZ() + random.nextDouble() - 0.5, 0, 0.1, 0);
+            }
+
+            laughSoundCooldown = 400;
+        }
+    }
+    private void summonIllusionClones() {
+        for (int i = 0; i < 3; i++) {
+            DarkDoppelgangerEntity clone = EntityRegistry.DARK_DOPPELGANGER.get().create(level());
+            if (clone != null) {
+                clone.setPos(getX() + random.nextInt(5) - 2, getY(), getZ() + random.nextInt(5) - 2);
+                clone.setHealth(10.0F); // Low health
+                clone.isClone = true;
+                level().addFreshEntity(clone);
+
+                level().addParticle(ParticleTypes.ENCHANT, clone.getX(), clone.getY(), clone.getZ(), 0, 1, 0);
             }
         }
     }
+
 
     private void shockwaveAttack() {
         level().getEntitiesOfClass(Player.class, getBoundingBox().inflate(12)).forEach(player -> {
@@ -375,7 +419,11 @@ public class DarkDoppelgangerEntity extends PathfinderMob {
             player.hurt(level().damageSources().magic(), 4.0F);
             heal(4.0F);
         });
-        level().playSound(null, getX(), getY(), getZ(), ModSounds.BOSS_LAUGH.get(), SoundSource.HOSTILE, 1.0F, 1.0F);
+
+        if (laughCooldown <= 0) {
+            level().playSound(null, getX(), getY(), getZ(), ModSounds.BOSS_LAUGH.get(), SoundSource.HOSTILE, 0.0F, 1.0F);
+            laughCooldown = 400;
+        }
     }
 
     @Override
@@ -408,8 +456,9 @@ public class DarkDoppelgangerEntity extends PathfinderMob {
                 }
 
                 this.spawnAtLocation(Items.NETHER_STAR);
+                this.spawnAtLocation(Items.ECHO_SHARD, 3);
                 this.spawnAtLocation(Items.DIAMOND_BLOCK, 3);
-                this.level().addFreshEntity(new ExperienceOrb(this.level(), this.getX(), this.getY(), this.getZ(), 1500));
+                this.level().addFreshEntity(new ExperienceOrb(this.level(), this.getX(), this.getY(), this.getZ(), 2500));
             }
 
             // Stop the music for the real boss only
