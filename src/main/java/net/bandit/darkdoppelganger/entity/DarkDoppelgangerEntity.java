@@ -1,6 +1,14 @@
 package net.bandit.darkdoppelganger.entity;
 
+import io.redspace.ironsspellbooks.api.registry.SpellRegistry;
+import io.redspace.ironsspellbooks.entity.mobs.IAnimatedAttacker;
+import io.redspace.ironsspellbooks.entity.mobs.abstract_spell_casting_mob.AbstractSpellCastingMob;
+import io.redspace.ironsspellbooks.entity.mobs.goals.AttackAnimationData;
+import io.redspace.ironsspellbooks.entity.mobs.goals.PatrolNearLocationGoal;
+import io.redspace.ironsspellbooks.entity.mobs.goals.SpellBarrageGoal;
+import io.redspace.ironsspellbooks.entity.mobs.wizards.GenericAnimatedWarlockAttackGoal;
 import net.bandit.darkdoppelganger.Config;
+import net.bandit.darkdoppelganger.DarkDoppelgangerMod;
 import net.bandit.darkdoppelganger.registry.ModSounds;
 import net.minecraft.ChatFormatting;
 import net.minecraft.advancements.Advancement;
@@ -18,17 +26,26 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.control.LookControl;
+import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.ai.goal.*;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
+import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.LargeFireball;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
+import software.bernie.geckolib.core.animation.AnimatableManager;
+import software.bernie.geckolib.core.animation.AnimationController;
+import software.bernie.geckolib.core.animation.AnimationState;
+import software.bernie.geckolib.core.animation.RawAnimation;
+import software.bernie.geckolib.core.object.PlayState;
+
+import java.util.List;
 
 
-
-public class DarkDoppelgangerEntity extends PathfinderMob {
+public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements Enemy, IAnimatedAttacker {
 
     private Player summonerPlayer;
     private final ServerBossEvent bossEvent;
@@ -51,12 +68,47 @@ public class DarkDoppelgangerEntity extends PathfinderMob {
 
 
 
-    public DarkDoppelgangerEntity(EntityType<? extends PathfinderMob> type, Level world) {
+    public DarkDoppelgangerEntity(EntityType<? extends AbstractSpellCastingMob> type, Level world) {
         super(type, world);
         this.setCustomName(Component.literal("Dark Doppelganger"));
         this.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, Integer.MAX_VALUE, 0, false, false));
         this.bossEvent = new ServerBossEvent(Component.literal("Dark Doppelganger"), ServerBossEvent.BossBarColor.PURPLE, ServerBossEvent.BossBarOverlay.PROGRESS);
+        this.lookControl = createLookControl();
+        this.moveControl = createMoveControl();
     }
+
+    protected LookControl createLookControl() {
+        return new LookControl(this) {
+            //This allows us to more rapidly turn towards our target. Helps to make sure his targets are aligned with his swing animations
+            @Override
+            protected float rotateTowards(float pFrom, float pTo, float pMaxDelta) {
+                return super.rotateTowards(pFrom, pTo, pMaxDelta * 2.5f);
+            }
+
+            @Override
+            protected boolean resetXRotOnTick() {
+                return getTarget() == null;
+            }
+        };
+    }
+
+    protected MoveControl createMoveControl() {
+        return new MoveControl(this) {
+            //This fixes a bug where a mob tries to path into the block it's already standing, and spins around trying to look "forward"
+            //We nullify our rotation calculation if we are close to block we are trying to get to
+            @Override
+            protected float rotlerp(float pSourceAngle, float pTargetAngle, float pMaximumChange) {
+                double d0 = this.wantedX - this.mob.getX();
+                double d1 = this.wantedZ - this.mob.getZ();
+                if (d0 * d0 + d1 * d1 < .5f) {
+                    return pSourceAngle;
+                } else {
+                    return super.rotlerp(pSourceAngle, pTargetAngle, pMaximumChange * .25f);
+                }
+            }
+        };
+    }
+
     public void setSummonerPlayer(Player summoner) {
         this.summonerPlayer = summoner;
 
@@ -66,6 +118,91 @@ public class DarkDoppelgangerEntity extends PathfinderMob {
             }
         }
     }
+
+    @Override
+    protected void registerGoals() {
+        setFirstPhaseGoals();
+        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true));
+    }
+
+    protected void setFirstPhaseGoals(){
+        this.goalSelector.getRunningGoals().forEach(WrappedGoal::stop);
+        this.goalSelector.removeAllGoals((x) -> true);
+        this.goalSelector.addGoal(1, new FloatGoal(this));
+        this.goalSelector.addGoal(2, new SpellBarrageGoal(this, SpellRegistry.DEVOUR_SPELL.get(), 3, 6, 100, 250, 1));
+        this.goalSelector.addGoal(3, new GenericAnimatedWarlockAttackGoal<>(this, 1.25f, 50, 75, 3f)
+                .setMoveset(List.of(
+                        new AttackAnimationData(9, "simple_sword_upward_swipe", 5),
+                        new AttackAnimationData(8, "simple_sword_lunge_stab", 6),
+                        new AttackAnimationData(10, "simple_sword_stab_alternate", 8),
+                        new AttackAnimationData(10, "simple_sword_horizontal_cross_swipe", 8)
+                ))
+                .setComboChance(.4f)
+                .setMeleeAttackInverval(10, 30)
+                .setMeleeMovespeedModifier(1.5f)
+                .setSpells(
+                        List.of(SpellRegistry.GUIDING_BOLT_SPELL.get(), SpellRegistry.BLOOD_NEEDLES_SPELL.get(), SpellRegistry.BLOOD_SLASH_SPELL.get()),
+                        List.of(SpellRegistry.FANG_WARD_SPELL.get(), SpellRegistry.GUST_SPELL.get()),
+                        List.of(SpellRegistry.BURNING_DASH_SPELL.get()),
+                        List.of(SpellRegistry.BLIGHT_SPELL.get(), SpellRegistry.INVISIBILITY_SPELL.get())
+                )
+        );
+        this.goalSelector.addGoal(4, new PatrolNearLocationGoal(this, 30, .75f));
+        this.goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8.0F));
+    }
+
+    protected void setSecondPhaseGoals(){
+        this.goalSelector.getRunningGoals().forEach(WrappedGoal::stop);
+        this.goalSelector.removeAllGoals((x) -> true);
+        this.goalSelector.addGoal(1, new FloatGoal(this));
+        this.goalSelector.addGoal(2, new SpellBarrageGoal(this, SpellRegistry.FIREBALL_SPELL.get(), 3, 5, 100, 250, 1));
+        this.goalSelector.addGoal(3, new GenericAnimatedWarlockAttackGoal<>(this, 1.25f, 50, 75, 3f)
+                .setMoveset(List.of(
+                        new AttackAnimationData(9, "simple_sword_upward_swipe", 5),
+                        new AttackAnimationData(8, "simple_sword_lunge_stab", 6),
+                        new AttackAnimationData(10, "simple_sword_stab_alternate", 8),
+                        new AttackAnimationData(10, "simple_sword_horizontal_cross_swipe", 8)
+                ))
+                .setComboChance(.4f)
+                .setMeleeAttackInverval(10, 30)
+                .setMeleeMovespeedModifier(1.5f)
+                .setSpells(
+                        List.of(SpellRegistry.MAGIC_ARROW_SPELL.get(), SpellRegistry.POISON_ARROW_SPELL.get(), SpellRegistry.MAGMA_BOMB_SPELL.get()),
+                        List.of(SpellRegistry.HEAT_SURGE_SPELL.get(), SpellRegistry.FLAMING_STRIKE_SPELL.get()),
+                        List.of(SpellRegistry.FROST_STEP_SPELL.get()),
+                        List.of(SpellRegistry.ROOT_SPELL.get(), SpellRegistry.THUNDERSTORM_SPELL.get())
+                )
+        );
+        this.goalSelector.addGoal(4, new PatrolNearLocationGoal(this, 30, .75f));
+        this.goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8.0F));
+    }
+
+    protected void setThirdPhaseGoals(){
+        this.goalSelector.getRunningGoals().forEach(WrappedGoal::stop);
+        this.goalSelector.removeAllGoals((x) -> true);
+        this.goalSelector.addGoal(1, new FloatGoal(this));
+        this.goalSelector.addGoal(2, new SpellBarrageGoal(this, SpellRegistry.RAY_OF_FROST_SPELL.get(), 3, 5, 100, 250, 1));
+        this.goalSelector.addGoal(3, new GenericAnimatedWarlockAttackGoal<>(this, 1.25f, 50, 75, 3f)
+                .setMoveset(List.of(
+                        new AttackAnimationData(9, "simple_sword_upward_swipe", 5),
+                        new AttackAnimationData(8, "simple_sword_lunge_stab", 6),
+                        new AttackAnimationData(10, "simple_sword_stab_alternate", 8),
+                        new AttackAnimationData(10, "simple_sword_horizontal_cross_swipe", 8)
+                ))
+                .setComboChance(.4f)
+                .setMeleeAttackInverval(10, 30)
+                .setMeleeMovespeedModifier(1.5f)
+                .setSpells(
+                        List.of(SpellRegistry.LIGHTNING_LANCE_SPELL.get(), SpellRegistry.STOMP_SPELL.get()),
+                        List.of(SpellRegistry.SHOCKWAVE_SPELL.get(), SpellRegistry.ASCENSION_SPELL.get()),
+                        List.of(SpellRegistry.BLOOD_STEP_SPELL.get()),
+                        List.of(SpellRegistry.EVASION_SPELL.get(), SpellRegistry.ECHOING_STRIKES_SPELL.get())
+                )
+        );
+        this.goalSelector.addGoal(4, new PatrolNearLocationGoal(this, 30, .75f));
+        this.goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8.0F));
+    }
+
     @Override
     public void onAddedToWorld() {
         super.onAddedToWorld();
@@ -183,11 +320,13 @@ public class DarkDoppelgangerEntity extends PathfinderMob {
         // Phase triggers
         if (!secondPhaseTriggered && this.getHealth() < this.getMaxHealth() * 0.2) {
             triggerSecondPhase();
+            setSecondPhaseGoals();
         }
         if (!thirdPhaseTriggered && this.getHealth() < this.getMaxHealth() * 0.2) {
             triggerThirdPhase();
+            setThirdPhaseGoals();
         }
-
+        /*
         // Abilities
         if (teleportCooldown-- <= 0) {
             shadowTeleport();
@@ -223,6 +362,7 @@ public class DarkDoppelgangerEntity extends PathfinderMob {
         }
         if (roarSoundCooldown > 0) roarSoundCooldown--;
         if (laughSoundCooldown > 0) laughSoundCooldown--;
+        */
     }
 
     private void triggerSecondPhase() {
@@ -427,14 +567,6 @@ public class DarkDoppelgangerEntity extends PathfinderMob {
     }
 
     @Override
-    protected void registerGoals() {
-        this.goalSelector.addGoal(1, new NearestAttackableTargetGoal<>(this, Player.class, true));
-        this.goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.6D, true));
-        this.goalSelector.addGoal(3, new MoveTowardsTargetGoal(this, 1.2D, 64.0F));
-        this.goalSelector.addGoal(4, new LeapAtTargetGoal(this, 0.8F));
-        this.goalSelector.addGoal(5, new RandomStrollGoal(this, 0.5D));
-    }
-    @Override
     public void die(DamageSource cause) {
         super.die(cause);
         if (isClone) {
@@ -478,4 +610,42 @@ public class DarkDoppelgangerEntity extends PathfinderMob {
                 .add(Attributes.FOLLOW_RANGE, 64.0); // Default value
     }
 
+    @Override
+    public boolean shouldSheathSword() {
+        return true;
+    }
+
+    RawAnimation animationToPlay = null;
+    private final AnimationController<DarkDoppelgangerEntity> meleeController = new AnimationController<>(this, "keeper_animations", 0, this::predicate);
+
+    @Override
+    public void playAnimation(String animationId) {
+        try {
+            animationToPlay = RawAnimation.begin().thenPlay(animationId);
+        } catch (Exception ignored) {
+            DarkDoppelgangerMod.LOGGER.error("Entity {} Failed to play animation: {}", this, animationId);
+        }
+    }
+
+    private PlayState predicate(AnimationState<DarkDoppelgangerEntity> animationEvent) {
+        var controller = animationEvent.getController();
+
+        if (this.animationToPlay != null) {
+            controller.forceAnimationReset();
+            controller.setAnimation(animationToPlay);
+            animationToPlay = null;
+        }
+        return PlayState.CONTINUE;
+    }
+
+    @Override
+    public void registerControllers(AnimatableManager.ControllerRegistrar controllerRegistrar) {
+        controllerRegistrar.add(meleeController);
+        super.registerControllers(controllerRegistrar);
+    }
+
+    @Override
+    public boolean isAnimating() {
+        return meleeController.getAnimationState() != AnimationController.State.STOPPED || super.isAnimating();
+    }
 }
