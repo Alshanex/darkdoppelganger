@@ -363,7 +363,7 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
                 setThirdPhaseGoals();
             }
         }
-        if(thirdPhaseTriggered && Config.DOPPLEGANGER_HARD_MODE.get()){
+        if(Config.DOPPLEGANGER_HARD_MODE.get()){
             this.addEffect(new MobEffectInstance(MobEffectRegistry.OAKSKIN.get(), 10, 4, false, false, true));
             this.addEffect(new MobEffectInstance(MobEffectRegistry.CHARGED.get(), 10, 2, false, false, true));
         }
