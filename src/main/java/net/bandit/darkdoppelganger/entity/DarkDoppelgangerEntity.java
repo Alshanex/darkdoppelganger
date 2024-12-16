@@ -7,6 +7,9 @@ import io.redspace.ironsspellbooks.entity.mobs.goals.AttackAnimationData;
 import io.redspace.ironsspellbooks.entity.mobs.goals.PatrolNearLocationGoal;
 import io.redspace.ironsspellbooks.entity.mobs.goals.SpellBarrageGoal;
 import io.redspace.ironsspellbooks.entity.mobs.wizards.GenericAnimatedWarlockAttackGoal;
+import io.redspace.ironsspellbooks.network.spell.ClientboundOakskinParticles;
+import io.redspace.ironsspellbooks.registries.MobEffectRegistry;
+import io.redspace.ironsspellbooks.setup.Messages;
 import net.bandit.darkdoppelganger.Config;
 import net.bandit.darkdoppelganger.DarkDoppelgangerMod;
 import net.bandit.darkdoppelganger.registry.ModSounds;
@@ -203,6 +206,32 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
         this.goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8.0F));
     }
 
+    protected void setFinalPhaseGoals(){
+        this.goalSelector.getRunningGoals().forEach(WrappedGoal::stop);
+        this.goalSelector.removeAllGoals((x) -> true);
+        this.goalSelector.addGoal(1, new FloatGoal(this));
+        this.goalSelector.addGoal(2, new SpellBarrageGoal(this, SpellRegistry.SCULK_TENTACLES_SPELL.get(), 3, 4, 100, 160, 1));
+        this.goalSelector.addGoal(3, new GenericAnimatedWarlockAttackGoal<>(this, 1.4f, 30, 50, 3f)
+                .setMoveset(List.of(
+                        new AttackAnimationData(9, "simple_sword_upward_swipe", 5),
+                        new AttackAnimationData(8, "simple_sword_lunge_stab", 6),
+                        new AttackAnimationData(10, "simple_sword_stab_alternate", 8),
+                        new AttackAnimationData(10, "simple_sword_horizontal_cross_swipe", 8)
+                ))
+                .setComboChance(.7f)
+                .setMeleeAttackInverval(10, 20)
+                .setMeleeMovespeedModifier(1.7f)
+                .setSpells(
+                        List.of(SpellRegistry.ELDRITCH_BLAST_SPELL.get(), SpellRegistry.SONIC_BOOM_SPELL.get(), SpellRegistry.ABYSSAL_SHROUD_SPELL.get(), SpellRegistry.RAY_OF_FROST_SPELL.get(), SpellRegistry.SCULK_TENTACLES_SPELL.get()),
+                        List.of(SpellRegistry.ASCENSION_SPELL.get(), SpellRegistry.ABYSSAL_SHROUD_SPELL.get()),
+                        List.of(SpellRegistry.BLOOD_STEP_SPELL.get()),
+                        List.of(SpellRegistry.ABYSSAL_SHROUD_SPELL.get())
+                )
+        );
+        this.goalSelector.addGoal(4, new PatrolNearLocationGoal(this, 30, .75f));
+        this.goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8.0F));
+    }
+
     @Override
     public void onAddedToWorld() {
         super.onAddedToWorld();
@@ -320,11 +349,23 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
         // Phase triggers
         if (!secondPhaseTriggered && this.getHealth() < this.getMaxHealth() * 0.2) {
             triggerSecondPhase();
-            setSecondPhaseGoals();
+            if(Config.DOPPLEGANGER_HARD_MODE.get()){
+                setThirdPhaseGoals();
+            } else {
+                setSecondPhaseGoals();
+            }
         }
         if (!thirdPhaseTriggered && this.getHealth() < this.getMaxHealth() * 0.2) {
             triggerThirdPhase();
-            setThirdPhaseGoals();
+            if(Config.DOPPLEGANGER_HARD_MODE.get()){
+                setFinalPhaseGoals();
+            } else {
+                setThirdPhaseGoals();
+            }
+        }
+        if(thirdPhaseTriggered && Config.DOPPLEGANGER_HARD_MODE.get()){
+            this.addEffect(new MobEffectInstance(MobEffectRegistry.OAKSKIN.get(), 10, 4, false, false, true));
+            this.addEffect(new MobEffectInstance(MobEffectRegistry.CHARGED.get(), 10, 2, false, false, true));
         }
         /*
         // Abilities
@@ -337,7 +378,7 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
             shockwaveAttack();
             shockwaveCooldown = 200;
         }
-
+        */
         if (thirdPhaseTriggered) {
             if (minionSummonCooldown-- <= 0) {
                 summonMinions();
@@ -347,6 +388,7 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
                 lifeDrainAttack();
                 lifeDrainCooldown = 150;
             }
+            /*
             if (levitationCooldown-- <= 0) {
                 levitationAttack();
                 levitationCooldown = 300;
@@ -359,10 +401,11 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
                 gravitationalPull();
                 gravityPullCooldown = 300;
             }
+             */
         }
         if (roarSoundCooldown > 0) roarSoundCooldown--;
         if (laughSoundCooldown > 0) laughSoundCooldown--;
-        */
+
     }
 
     private void triggerSecondPhase() {

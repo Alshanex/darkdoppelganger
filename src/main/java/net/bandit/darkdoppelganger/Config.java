@@ -11,6 +11,7 @@ public class Config {
     public static ForgeConfigSpec.DoubleValue DOPPELGANGER_KNOCKBACK_RESISTANCE;
     public static ForgeConfigSpec.DoubleValue DOPPELGANGER_ARMOR;
     public static ForgeConfigSpec.DoubleValue DOPPELGANGER_FOLLOW_RANGE;
+    public static ForgeConfigSpec.BooleanValue DOPPLEGANGER_HARD_MODE;
 
     static {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
@@ -40,6 +41,10 @@ public class Config {
         DOPPELGANGER_FOLLOW_RANGE = builder
                 .comment("Follow Range of the Dark Doppelganger")
                 .defineInRange("follow_range", 64.0, 1.0, 128.0);
+
+        DOPPLEGANGER_HARD_MODE = builder
+                .comment("Hard mode of the Dark Doppelganger")
+                .define("hard_mode", false);
 
         builder.pop();
         COMMON_CONFIG = builder.build();
