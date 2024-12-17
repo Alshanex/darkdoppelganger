@@ -3,5 +3,9 @@
   "itemGroup.darkdoppelganger.example_tab": "Dark Doppelganger Tab",
   "item.darkdoppelganger.summon_scroll.tooltip": "Use this to summon the Dark Doppelganger!",
   "advancement.kill_dark_doppelganger.title": "Dark Doppelganger Slayer",
-  "advancement.kill_dark_doppelganger.description": "Defeated the Dark Doppelganger. A reward awaits!"
+  "advancement.kill_dark_doppelganger.description": "Defeated the Dark Doppelganger. A reward awaits!",
+
+  "advancement.summon_dark_doppelganger.title": "Dark Doppelganger Awakened",
+  "advancement.summon_dark_doppelganger.description": "Use the summoning scroll to call forth the Dark Doppelganger."
+
 }

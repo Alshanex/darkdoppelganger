@@ -8,9 +8,7 @@ import io.redspace.ironsspellbooks.entity.mobs.goals.AttackAnimationData;
 import io.redspace.ironsspellbooks.entity.mobs.goals.PatrolNearLocationGoal;
 import io.redspace.ironsspellbooks.entity.mobs.goals.SpellBarrageGoal;
 import io.redspace.ironsspellbooks.entity.mobs.wizards.GenericAnimatedWarlockAttackGoal;
-import io.redspace.ironsspellbooks.network.spell.ClientboundOakskinParticles;
 import io.redspace.ironsspellbooks.registries.MobEffectRegistry;
-import io.redspace.ironsspellbooks.setup.Messages;
 import net.bandit.darkdoppelganger.Config;
 import net.bandit.darkdoppelganger.DarkDoppelgangerMod;
 import net.bandit.darkdoppelganger.registry.ModSounds;
@@ -608,6 +606,7 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
                 clone.setPos(getX() + random.nextInt(5) - 2, getY(), getZ() + random.nextInt(5) - 2);
                 clone.setHealth(10.0F); // Low health
                 clone.isClone = true;
+                clone.addTag("dark_doppelganger_clone");
                 level().addFreshEntity(clone);
 
                 level().addParticle(ParticleTypes.ENCHANT, clone.getX(), clone.getY(), clone.getZ(), 0, 1, 0);
@@ -704,10 +703,10 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
                 .add(Attributes.FOLLOW_RANGE, 64.0); // Default value
     }
 
-    @Override
-    public boolean shouldSheathSword() {
-        return true;
-    }
+//    @Override
+//    public boolean shouldSheathSword() {
+//        return true;
+//    }
 
     RawAnimation animationToPlay = null;
     private final AnimationController<DarkDoppelgangerEntity> meleeController = new AnimationController<>(this, "keeper_animations", 0, this::predicate);
