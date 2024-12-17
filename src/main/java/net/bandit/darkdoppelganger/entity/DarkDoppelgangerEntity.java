@@ -56,7 +56,7 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
     private final ServerBossEvent bossEvent;
     private boolean secondPhaseTriggered = false;
     private boolean thirdPhaseTriggered = false;
-    private boolean isClone = false;
+    public boolean isClone = false;
     private boolean musicPlaying = false;
     private int teleportCooldown = 80;
     private int shockwaveCooldown = 200;
@@ -130,16 +130,20 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
             copyAttribute(AttributeRegistry.LIGHTNING_SPELL_POWER.get());
             copyAttribute(AttributeRegistry.EVOCATION_SPELL_POWER.get());
             copyAttribute(AttributeRegistry.ENDER_SPELL_POWER.get());
+            copyAttribute(AttributeRegistry.SPELL_POWER.get());
 
-            copyAttribute(AttributeRegistry.HOLY_MAGIC_RESIST.get());
-            copyAttribute(AttributeRegistry.BLOOD_MAGIC_RESIST.get());
-            copyAttribute(AttributeRegistry.NATURE_MAGIC_RESIST.get());
-            copyAttribute(AttributeRegistry.ELDRITCH_MAGIC_RESIST.get());
-            copyAttribute(AttributeRegistry.FIRE_MAGIC_RESIST.get());
-            copyAttribute(AttributeRegistry.ICE_MAGIC_RESIST.get());
-            copyAttribute(AttributeRegistry.LIGHTNING_MAGIC_RESIST.get());
-            copyAttribute(AttributeRegistry.EVOCATION_MAGIC_RESIST.get());
-            copyAttribute(AttributeRegistry.ENDER_MAGIC_RESIST.get());
+            if(Config.DOPPLEGANGER_HARD_MODE.get()){
+                this.getAttribute(AttributeRegistry.HOLY_MAGIC_RESIST.get()).setBaseValue(1.5f);
+                this.getAttribute(AttributeRegistry.FIRE_MAGIC_RESIST.get()).setBaseValue(1.7f);
+                this.getAttribute(AttributeRegistry.BLOOD_MAGIC_RESIST.get()).setBaseValue(1.7f);
+                this.getAttribute(AttributeRegistry.NATURE_MAGIC_RESIST.get()).setBaseValue(1.6f);
+                this.getAttribute(AttributeRegistry.ELDRITCH_MAGIC_RESIST.get()).setBaseValue(1.9f);
+                this.getAttribute(AttributeRegistry.ICE_MAGIC_RESIST.get()).setBaseValue(1.5f);
+                this.getAttribute(AttributeRegistry.LIGHTNING_MAGIC_RESIST.get()).setBaseValue(1.6f);
+                this.getAttribute(AttributeRegistry.EVOCATION_MAGIC_RESIST.get()).setBaseValue(1.5f);
+                this.getAttribute(AttributeRegistry.ENDER_MAGIC_RESIST.get()).setBaseValue(1.6f);
+                this.getAttribute(AttributeRegistry.SPELL_RESIST.get()).setBaseValue(1.7f);
+            }
         }
     }
 
@@ -243,13 +247,14 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
                 .setMeleeAttackInverval(10, 20)
                 .setMeleeMovespeedModifier(1.7f)
                 .setSpells(
-                        List.of(SpellRegistry.ELDRITCH_BLAST_SPELL.get(), SpellRegistry.SONIC_BOOM_SPELL.get(), SpellRegistry.ABYSSAL_SHROUD_SPELL.get(), SpellRegistry.RAY_OF_FROST_SPELL.get(), SpellRegistry.SCULK_TENTACLES_SPELL.get()),
+                        List.of(SpellRegistry.ELDRITCH_BLAST_SPELL.get(), SpellRegistry.SONIC_BOOM_SPELL.get(), SpellRegistry.ABYSSAL_SHROUD_SPELL.get(), SpellRegistry.RAY_OF_FROST_SPELL.get(), SpellRegistry.SCULK_TENTACLES_SPELL.get(), SpellRegistry.ACID_ORB_SPELL.get()),
                         List.of(SpellRegistry.ASCENSION_SPELL.get(), SpellRegistry.ABYSSAL_SHROUD_SPELL.get()),
-                        List.of(SpellRegistry.BLOOD_STEP_SPELL.get()),
-                        List.of(SpellRegistry.ABYSSAL_SHROUD_SPELL.get(), SpellRegistry.ECHOING_STRIKES_SPELL.get())
+                        List.of(SpellRegistry.BLOOD_STEP_SPELL.get(), SpellRegistry.ABYSSAL_SHROUD_SPELL.get()),
+                        List.of(SpellRegistry.ABYSSAL_SHROUD_SPELL.get(), SpellRegistry.ECHOING_STRIKES_SPELL.get(), SpellRegistry.ROOT_SPELL.get(), SpellRegistry.BLIGHT_SPELL.get())
                 )
         );
-        this.goalSelector.addGoal(4, new PatrolNearLocationGoal(this, 30, .75f));
+        this.goalSelector.addGoal(4, new SpellBarrageGoal(this, SpellRegistry.GREATER_HEAL_SPELL.get(), 1, 1, 1000, 1200, 1));
+        this.goalSelector.addGoal(5, new PatrolNearLocationGoal(this, 30, .75f));
         this.goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8.0F));
     }
 
@@ -403,23 +408,35 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
         }
 
         if(Config.DOPPLEGANGER_HARD_MODE.get()){
-            this.addEffect(new MobEffectInstance(MobEffectRegistry.OAKSKIN.get(), 10, 4, false, false, true));
+            this.addEffect(new MobEffectInstance(MobEffectRegistry.OAKSKIN.get(), 10, 8, false, false, true));
             this.addEffect(new MobEffectInstance(MobEffectRegistry.CHARGED.get(), 10, 2, false, false, true));
             this.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, 10, 0, false, false));
         }
 
-        /*
-        // Abilities
-        if (teleportCooldown-- <= 0) {
-            shadowTeleport();
-            teleportCooldown = 100;
+        if(Config.DOPPLEGANGER_HARD_MODE.get()){
+            if(this.tickCount % 10 == 0){
+                this.level().getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(20, 10, 20)).forEach(target -> {
+                    if(target != this){
+                        if(target.hasEffect(MobEffects.DIG_SPEED)){
+                            target.removeEffect(MobEffects.DIG_SPEED);
+                        }
+                        if(target.hasEffect(MobEffectRegistry.ABYSSAL_SHROUD.get())){
+                            target.removeEffect(MobEffectRegistry.ABYSSAL_SHROUD.get());
+                        }
+                        if(target.hasEffect(MobEffectRegistry.EVASION.get())){
+                            target.removeEffect(MobEffectRegistry.EVASION.get());
+                        }
+                        if(target.hasEffect(MobEffectRegistry.HASTENED.get())){
+                            target.removeEffect(MobEffectRegistry.HASTENED.get());
+                        }
+                        if(target.hasEffect(MobEffectRegistry.ECHOING_STRIKES.get())){
+                            target.removeEffect(MobEffectRegistry.ECHOING_STRIKES.get());
+                        }
+                    }
+                });
+            }
         }
 
-        if (shockwaveCooldown-- <= 0) {
-            shockwaveAttack();
-            shockwaveCooldown = 200;
-        }
-        */
         if (thirdPhaseTriggered) {
             if (minionSummonCooldown-- <= 0) {
                 summonMinions();
@@ -429,20 +446,6 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
                 lifeDrainAttack();
                 lifeDrainCooldown = 150;
             }
-            /*
-            if (levitationCooldown-- <= 0) {
-                levitationAttack();
-                levitationCooldown = 300;
-            }
-            if (meteorShowerCooldown-- <= 0) {
-                meteorShowerAttack();
-                meteorShowerCooldown = 200;
-            }
-            if (gravityPullCooldown-- <= 0) {
-                gravitationalPull();
-                gravityPullCooldown = 300;
-            }
-             */
         }
         if (roarSoundCooldown > 0) roarSoundCooldown--;
         if (laughSoundCooldown > 0) laughSoundCooldown--;
