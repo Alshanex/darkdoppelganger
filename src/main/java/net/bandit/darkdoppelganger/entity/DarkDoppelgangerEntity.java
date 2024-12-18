@@ -506,7 +506,7 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
         lifeDrainCooldown = 200;
         meteorShowerCooldown = 200;
     }
-//    private void createDangerZones() {
+    //    private void createDangerZones() {
 //        for (int i = 0; i < 3; i++) {
 //            BlockPos dangerPos = new BlockPos((int) (getX() + random.nextInt(10) - 5), (int) getY(), (int) (getZ() + random.nextInt(10) - 5));
 //            level().setBlock(dangerPos, Blocks.MAGMA_BLOCK.defaultBlockState(), 3);
@@ -705,11 +705,6 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
                 .add(Attributes.ARMOR, 20.0) // Default value
                 .add(Attributes.FOLLOW_RANGE, 64.0); // Default value
     }
-
-//    @Override
-//    public boolean shouldSheathSword() {
-//        return true;
-//    }
 
     RawAnimation animationToPlay = null;
     private final AnimationController<DarkDoppelgangerEntity> meleeController = new AnimationController<>(this, "keeper_animations", 0, this::predicate);
