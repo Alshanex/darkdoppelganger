@@ -11,6 +11,7 @@ import io.redspace.ironsspellbooks.entity.mobs.wizards.GenericAnimatedWarlockAtt
 import io.redspace.ironsspellbooks.registries.MobEffectRegistry;
 import net.bandit.darkdoppelganger.Config;
 import net.bandit.darkdoppelganger.DarkDoppelgangerMod;
+import net.bandit.darkdoppelganger.item.ItemRegistry;
 import net.bandit.darkdoppelganger.registry.ModSounds;
 import net.minecraft.ChatFormatting;
 import net.minecraft.advancements.Advancement;
@@ -381,9 +382,9 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
             laughCooldown--;
         }
 
-        if (this.getHealth() < this.getMaxHealth() * 0.3 && minionSummonCooldown <= 0) {
+        if (this.getHealth() < this.getMaxHealth() * 0.4 && minionSummonCooldown <= 0) {
             summonIllusionClones();
-            minionSummonCooldown = 400;
+            minionSummonCooldown = 500;
         }
 
         // Phase triggers
@@ -463,7 +464,7 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
 
         for (ServerPlayer player : level().getEntitiesOfClass(ServerPlayer.class, getBoundingBox().inflate(50))) {
             player.sendSystemMessage(Component.literal("The Dark Doppelganger has entered its Second Phase!").withStyle(ChatFormatting.DARK_PURPLE));
-            player.playSound(ModSounds.BOSS_ROAR.get(), 1.0F, 1.0F);
+            level().playSound(null, getX(), getY(), getZ(), ModSounds.BOSS_ROAR.get(), SoundSource.HOSTILE, 1.0F, 1.0F);
             player.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 60, 0));
         }
 
@@ -487,7 +488,7 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
         bossEvent.setName(Component.literal("Dark Doppelganger - Final Phase"));
 
         for (ServerPlayer player : level().getEntitiesOfClass(ServerPlayer.class, getBoundingBox().inflate(50))) {
-            player.playSound(ModSounds.BOSS_ROAR.get(), 1.0F, 1.0F);
+            level().playSound(null, getX(), getY(), getZ(), ModSounds.BOSS_ROAR.get(), SoundSource.HOSTILE, 1.0F, 1.0F);
             player.displayClientMessage(Component.literal("Final Form! Prepare yourself!").withStyle(ChatFormatting.RED), true);
         }
 
@@ -578,6 +579,8 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
                     serverPlayer.getAdvancements().award(advancement, "kill");
                     serverPlayer.sendSystemMessage(Component.literal("You have slain the Dark Doppelganger!"));
                 }
+                // Drop the ring
+                this.spawnAtLocation(ItemRegistry.DOPPELGANGER_RING.get());
 
                 this.spawnAtLocation(Items.NETHER_STAR);
                 this.spawnAtLocation(Items.ECHO_SHARD, 3);
