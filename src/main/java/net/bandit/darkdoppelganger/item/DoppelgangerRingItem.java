@@ -2,6 +2,7 @@ package net.bandit.darkdoppelganger.item;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import io.redspace.ironsspellbooks.api.registry.AttributeRegistry;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
@@ -19,6 +20,7 @@ import java.util.UUID;
 public class DoppelgangerRingItem extends Item implements ICurioItem {
 
     private static final UUID HEALTH_BOOST_UUID = UUID.fromString("1d1a82d8-c9d2-11ed-afa1-0242ac120002");
+    private static final UUID MAX_MANA_UUID = UUID.fromString("2d2a92d8-c9d2-11ed-afa1-0242ac120003");
 
     public DoppelgangerRingItem(Properties properties) {
         super(properties);
@@ -29,7 +31,9 @@ public class DoppelgangerRingItem extends Item implements ICurioItem {
         Multimap<Attribute, AttributeModifier> modifiers = HashMultimap.create();
         modifiers.put(Attributes.MAX_HEALTH,
                 new AttributeModifier(HEALTH_BOOST_UUID, "Ring health boost", 20.0, AttributeModifier.Operation.ADDITION));
-
+        //Irons addon
+        modifiers.put(AttributeRegistry.MAX_MANA.get(),
+            new AttributeModifier(MAX_MANA_UUID, "Ring mana boost", 100.0, AttributeModifier.Operation.ADDITION));
         return modifiers;
     }
 
