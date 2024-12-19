@@ -61,7 +61,7 @@ public class PortalJoinEntity extends Entity implements GeoEntity {
         super.tick();
 
         if (!level().isClientSide) {
-            if (age >= 35) {
+            if (age >= 34) {
                 this.discard();
             }
         }

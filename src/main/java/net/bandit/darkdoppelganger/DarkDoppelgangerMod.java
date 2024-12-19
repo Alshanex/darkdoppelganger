@@ -8,6 +8,7 @@ import net.bandit.darkdoppelganger.entity.renderer.PortalJoinRenderer;
 import net.bandit.darkdoppelganger.entity.renderer.PortalLeaveRenderer;
 import net.bandit.darkdoppelganger.item.ItemRegistry;
 import net.bandit.darkdoppelganger.registry.ModSounds;
+import net.bandit.darkdoppelganger.registry.SpellRegistry;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.CreativeModeTab;
@@ -78,6 +79,7 @@ public class DarkDoppelgangerMod {
         ItemRegistry.ITEMS.register(modEventBus);
         CREATIVE_MODE_TABS.register(modEventBus);
         ENTITY_TYPES.register(modEventBus);
+        SpellRegistry.register(modEventBus);
         ModSounds.register(modEventBus);
         MinecraftForge.EVENT_BUS.register(this);
     }
