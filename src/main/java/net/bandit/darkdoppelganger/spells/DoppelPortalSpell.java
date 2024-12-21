@@ -35,7 +35,7 @@ import java.util.Optional;
 
 @AutoSpellConfig
 public class DoppelPortalSpell extends AbstractSpell {
-    private Vec3 dest = null;
+    private boolean portalSpawned = false;
 
     private final ResourceLocation spellId = new ResourceLocation(DarkDoppelgangerMod.MOD_ID, "doppel_portal");
 
@@ -96,36 +96,39 @@ public class DoppelPortalSpell extends AbstractSpell {
 
     @Override
     public void onCast(Level level, int spellLevel, LivingEntity entity, CastSource castSource, MagicData playerMagicData) {
-        var teleportData = (TeleportSpell.TeleportData) playerMagicData.getAdditionalCastData();
-
-        this.dest = null;
-        if (teleportData != null) {
-            var potentialTarget = teleportData.getTeleportTargetPosition();
-            if (potentialTarget != null) {
-                this.dest = potentialTarget;
-            }
+        if(!portalSpawned){
+            PortalLeaveEntity portal = new PortalLeaveEntity(EntityRegistry.PORTAL_LEAVE_ENTITY.get(), level);
+            portalSpawned = true;
+            portal.setYRot(entity.getYRot());
+            portal.yRotO = entity.getYRot();
+            portal.setPos(entity.position());
+            level.addFreshEntity(portal);
         }
-
-        if (this.dest == null) {
-            this.dest = findTeleportLocation(level, entity, getDistance(spellLevel, entity));
-        }
-
-        PortalLeaveEntity portal = new PortalLeaveEntity(EntityRegistry.PORTAL_LEAVE_ENTITY.get(), level);
-        portal.setPos(entity.position());
-        portal.setXRot(entity.getXRot());
-        portal.setYRot(entity.getYRot());
-        level.addFreshEntity(portal);
         super.onCast(level, spellLevel, entity, castSource, playerMagicData);
     }
 
     @Override
-    public void onServerCastTick(Level level, int spellLevel, LivingEntity entity, @Nullable MagicData playerMagicData) {
-        if (playerMagicData != null && (playerMagicData.getCastDurationRemaining() + 1) == 5) {
-            Messages.sendToPlayersTrackingEntity(new ClientboundTeleportParticles(entity.position(), this.dest), entity, true);
+    public void onServerCastComplete(Level level, int spellLevel, LivingEntity entity, MagicData playerMagicData, boolean cancelled) {
+        if (playerMagicData != null) {
+            var teleportData = (TeleportSpell.TeleportData) playerMagicData.getAdditionalCastData();
+
+            Vec3 dest = null;
+            if (teleportData != null) {
+                var potentialTarget = teleportData.getTeleportTargetPosition();
+                if (potentialTarget != null) {
+                    dest = potentialTarget;
+                }
+            }
+
+            if (dest == null) {
+                dest = findTeleportLocation(level, entity, getDistance(spellLevel, entity));
+            }
+
+            Messages.sendToPlayersTrackingEntity(new ClientboundTeleportParticles(entity.position(), dest), entity, true);
             if (entity.isPassenger()) {
                 entity.stopRiding();
             }
-            entity.teleportTo(this.dest.x, this.dest.y, this.dest.z);
+            entity.teleportTo(dest.x, dest.y, dest.z);
             entity.resetFallDistance();
 
             playerMagicData.resetAdditionalCastData();
@@ -133,11 +136,13 @@ public class DoppelPortalSpell extends AbstractSpell {
             entity.playSound(getCastFinishSound().get(), 2.0f, 1.0f);
 
             PortalJoinEntity portal = new PortalJoinEntity(EntityRegistry.PORTAL_JOIN_ENTITY.get(), level);
-            portal.setPos(this.dest);
-            portal.setXRot(entity.getXRot());
             portal.setYRot(entity.getYRot());
+            portal.yRotO = entity.getYRot();
+            portal.setPos(dest);
             level.addFreshEntity(portal);
         }
+        portalSpawned = false;
+        super.onServerCastComplete(level, spellLevel, entity, playerMagicData, cancelled);
     }
 
     public static Vec3 findTeleportLocation(Level level, LivingEntity entity, float maxDistance) {
@@ -160,7 +165,7 @@ public class DoppelPortalSpell extends AbstractSpell {
     }
 
     private float getDistance(int spellLevel, LivingEntity sourceEntity) {
-        return (float) (Utils.softCapFormula(getEntityPowerMultiplier(sourceEntity)) * getSpellPower(spellLevel, null));
+        return (float) (Utils.softCapFormula(getEntityPowerMultiplier(sourceEntity)) * getSpellPower(spellLevel + 8, null));
     }
 
     @Override

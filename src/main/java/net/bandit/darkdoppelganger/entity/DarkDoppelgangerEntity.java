@@ -248,8 +248,8 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
                 .setMeleeMovespeedModifier(1.7f)
                 .setSpells(
                         List.of(SpellRegistry.ELDRITCH_BLAST_SPELL.get(), SpellRegistry.SONIC_BOOM_SPELL.get(), SpellRegistry.ABYSSAL_SHROUD_SPELL.get(), SpellRegistry.RAY_OF_FROST_SPELL.get(), SpellRegistry.SCULK_TENTACLES_SPELL.get()),
-                        List.of(SpellRegistry.ASCENSION_SPELL.get()),
-                        List.of(SpellRegistry.BLOOD_STEP_SPELL.get(), SpellRegistry.ABYSSAL_SHROUD_SPELL.get()),
+                        List.of(SpellRegistry.ASCENSION_SPELL.get(), SpellRegistry.ABYSSAL_SHROUD_SPELL.get()),
+                        List.of(SpellRegistry.BLOOD_STEP_SPELL.get(), net.bandit.darkdoppelganger.registry.SpellRegistry.DOPPEL_PORTAL.get()),
                         List.of(SpellRegistry.ABYSSAL_SHROUD_SPELL.get(), SpellRegistry.ECHOING_STRIKES_SPELL.get(), SpellRegistry.ROOT_SPELL.get(), SpellRegistry.BLIGHT_SPELL.get())
                 )
         );
@@ -450,8 +450,8 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
         if(age < 35 && !portalSpawned){
             PortalJoinEntity portal = new PortalJoinEntity(EntityRegistry.PORTAL_JOIN_ENTITY.get(), this.level());
             portal.setPos(this.position());
-            portal.setXRot(this.getXRot());
             portal.setYRot(this.getYRot());
+            portal.yRotO = this.getYRot();
             portalSpawned = true;
             this.level().addFreshEntity(portal);
         }

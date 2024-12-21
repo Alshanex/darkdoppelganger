@@ -1,10 +1,13 @@
 package net.bandit.darkdoppelganger.entity;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.core.animation.AnimatableManager;
@@ -13,9 +16,13 @@ import software.bernie.geckolib.core.animation.RawAnimation;
 import software.bernie.geckolib.core.object.PlayState;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
+import java.util.UUID;
+
 public class PortalLeaveEntity extends Entity implements GeoEntity {
 
     private int age;
+    private LivingEntity owner;
+    private UUID ownerUUID;
 
     public PortalLeaveEntity(EntityType<?> p_19870_, Level p_19871_) {
         super(p_19870_, p_19871_);
