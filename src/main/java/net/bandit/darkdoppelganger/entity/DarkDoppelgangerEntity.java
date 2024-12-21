@@ -68,6 +68,8 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
     private static final int MAX_MINIONS = 5;
     private static int currentMinionCount = 0;
     private int laughCooldown = 800;
+    private int age;
+    private boolean portalSpawned = false;
 
 
 
@@ -444,9 +446,20 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
                 lifeDrainCooldown = 150;
             }
         }
+
+        if(age < 35 && !portalSpawned){
+            PortalJoinEntity portal = new PortalJoinEntity(EntityRegistry.PORTAL_JOIN_ENTITY.get(), this.level());
+            portal.setPos(this.position());
+            portal.setXRot(this.getXRot());
+            portal.setYRot(this.getYRot());
+            portalSpawned = true;
+            this.level().addFreshEntity(portal);
+        }
+
         if (roarSoundCooldown > 0) roarSoundCooldown--;
         if (laughSoundCooldown > 0) laughSoundCooldown--;
 
+        age++;
     }
 
     @Override
@@ -605,7 +618,9 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
     }
 
     RawAnimation animationToPlay = null;
+    private final RawAnimation ANIMATION_SPAWN = RawAnimation.begin().thenPlay("join_1");
     private final AnimationController<DarkDoppelgangerEntity> meleeController = new AnimationController<>(this, "keeper_animations", 0, this::predicate);
+    private final AnimationController<DarkDoppelgangerEntity> spawnController = new AnimationController<>(this, "spawn_animations", 0, this::spawnPredicate);
 
     @Override
     public void playAnimation(String animationId) {
@@ -619,7 +634,7 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
     private PlayState predicate(AnimationState<DarkDoppelgangerEntity> animationEvent) {
         var controller = animationEvent.getController();
 
-        if (this.animationToPlay != null) {
+        if (age > 35 && this.animationToPlay != null) {
             controller.forceAnimationReset();
             controller.setAnimation(animationToPlay);
             animationToPlay = null;
@@ -627,14 +642,24 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
         return PlayState.CONTINUE;
     }
 
+    private PlayState spawnPredicate(AnimationState<DarkDoppelgangerEntity> animationEvent) {
+        var controller = animationEvent.getController();
+
+        if (age < 35) {
+            controller.setAnimation(ANIMATION_SPAWN);
+        }
+        return PlayState.CONTINUE;
+    }
+
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllerRegistrar) {
         controllerRegistrar.add(meleeController);
+        controllerRegistrar.add(spawnController);
         super.registerControllers(controllerRegistrar);
     }
 
     @Override
     public boolean isAnimating() {
-        return meleeController.getAnimationState() != AnimationController.State.STOPPED || super.isAnimating();
+        return meleeController.getAnimationState() != AnimationController.State.STOPPED || spawnController.getAnimationState() != AnimationController.State.STOPPED || super.isAnimating();
     }
 }
