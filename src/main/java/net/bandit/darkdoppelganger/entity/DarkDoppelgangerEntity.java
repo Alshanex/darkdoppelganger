@@ -639,7 +639,7 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
             controller.setAnimation(animationToPlay);
             animationToPlay = null;
         }
-        return PlayState.CONTINUE;
+        return spawnController.getAnimationState() == AnimationController.State.STOPPED ? PlayState.CONTINUE : PlayState.STOP;
     }
 
     private PlayState spawnPredicate(AnimationState<DarkDoppelgangerEntity> animationEvent) {
@@ -647,8 +647,9 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
 
         if (age < 35) {
             controller.setAnimation(ANIMATION_SPAWN);
+            return PlayState.CONTINUE;
         }
-        return PlayState.CONTINUE;
+        return PlayState.STOP;
     }
 
     @Override
