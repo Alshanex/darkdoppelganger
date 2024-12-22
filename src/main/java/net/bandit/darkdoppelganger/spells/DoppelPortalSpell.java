@@ -95,6 +95,16 @@ public class DoppelPortalSpell extends AbstractSpell {
     }
 
     @Override
+    public boolean allowCrafting() {
+        return false;
+    }
+
+    @Override
+    public boolean allowLooting() {
+        return false;
+    }
+
+    @Override
     public void onCast(Level level, int spellLevel, LivingEntity entity, CastSource castSource, MagicData playerMagicData) {
         if(!portalSpawned){
             PortalLeaveEntity portal = new PortalLeaveEntity(EntityRegistry.PORTAL_LEAVE_ENTITY.get(), level);
