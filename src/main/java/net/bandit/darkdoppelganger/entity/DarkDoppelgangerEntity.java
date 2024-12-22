@@ -69,7 +69,6 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
     private static int currentMinionCount = 0;
     private int laughCooldown = 800;
     private int age;
-    private boolean portalSpawned = false;
 
 
 
@@ -249,7 +248,7 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
                 .setSpells(
                         List.of(SpellRegistry.ELDRITCH_BLAST_SPELL.get(), SpellRegistry.SONIC_BOOM_SPELL.get(), SpellRegistry.ABYSSAL_SHROUD_SPELL.get(), SpellRegistry.RAY_OF_FROST_SPELL.get(), SpellRegistry.SCULK_TENTACLES_SPELL.get()),
                         List.of(SpellRegistry.ASCENSION_SPELL.get(), SpellRegistry.ABYSSAL_SHROUD_SPELL.get()),
-                        List.of(SpellRegistry.BLOOD_STEP_SPELL.get(), net.bandit.darkdoppelganger.registry.SpellRegistry.DOPPEL_PORTAL.get()),
+                        List.of(SpellRegistry.BLOOD_STEP_SPELL.get()),
                         List.of(SpellRegistry.ABYSSAL_SHROUD_SPELL.get(), SpellRegistry.ECHOING_STRIKES_SPELL.get(), SpellRegistry.ROOT_SPELL.get(), SpellRegistry.BLIGHT_SPELL.get())
                 )
         );
@@ -276,6 +275,12 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
         } else {
             spawnSummoningParticles();
         }
+
+        PortalJoinEntity portal = new PortalJoinEntity(EntityRegistry.PORTAL_JOIN_ENTITY.get(), this.level());
+        portal.setPos(this.position());
+        portal.setYRot(this.getYRot());
+        portal.yRotO = this.getYRot();
+        this.level().addFreshEntity(portal);
     }
 
     private void copyAttribute(net.minecraft.world.entity.ai.attributes.Attribute attribute) {
@@ -445,15 +450,6 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
                 lifeDrainAttack();
                 lifeDrainCooldown = 150;
             }
-        }
-
-        if(age < 35 && !portalSpawned){
-            PortalJoinEntity portal = new PortalJoinEntity(EntityRegistry.PORTAL_JOIN_ENTITY.get(), this.level());
-            portal.setPos(this.position());
-            portal.setYRot(this.getYRot());
-            portal.yRotO = this.getYRot();
-            portalSpawned = true;
-            this.level().addFreshEntity(portal);
         }
 
         if (roarSoundCooldown > 0) roarSoundCooldown--;
@@ -634,7 +630,7 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
     private PlayState predicate(AnimationState<DarkDoppelgangerEntity> animationEvent) {
         var controller = animationEvent.getController();
 
-        if (age > 35 && this.animationToPlay != null) {
+        if (age > 45 && this.animationToPlay != null) {
             controller.forceAnimationReset();
             controller.setAnimation(animationToPlay);
             animationToPlay = null;
@@ -645,7 +641,7 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
     private PlayState spawnPredicate(AnimationState<DarkDoppelgangerEntity> animationEvent) {
         var controller = animationEvent.getController();
 
-        if (age < 35) {
+        if (age < 45) {
             controller.setAnimation(ANIMATION_SPAWN);
             return PlayState.CONTINUE;
         }
