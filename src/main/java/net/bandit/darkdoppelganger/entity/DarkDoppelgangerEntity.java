@@ -68,6 +68,7 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
     private static final int MAX_MINIONS = 5;
     private static int currentMinionCount = 0;
     private int laughCooldown = 800;
+    private int age;
 
 
 
@@ -131,16 +132,16 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
             copyAttribute(AttributeRegistry.SPELL_POWER.get());
 
             if(Config.DOPPLEGANGER_HARD_MODE.get()){
-                this.getAttribute(AttributeRegistry.HOLY_MAGIC_RESIST.get()).setBaseValue(1.5f);
-                this.getAttribute(AttributeRegistry.FIRE_MAGIC_RESIST.get()).setBaseValue(1.7f);
-                this.getAttribute(AttributeRegistry.BLOOD_MAGIC_RESIST.get()).setBaseValue(1.7f);
-                this.getAttribute(AttributeRegistry.NATURE_MAGIC_RESIST.get()).setBaseValue(1.6f);
-                this.getAttribute(AttributeRegistry.ELDRITCH_MAGIC_RESIST.get()).setBaseValue(1.9f);
-                this.getAttribute(AttributeRegistry.ICE_MAGIC_RESIST.get()).setBaseValue(1.5f);
-                this.getAttribute(AttributeRegistry.LIGHTNING_MAGIC_RESIST.get()).setBaseValue(1.6f);
-                this.getAttribute(AttributeRegistry.EVOCATION_MAGIC_RESIST.get()).setBaseValue(1.5f);
-                this.getAttribute(AttributeRegistry.ENDER_MAGIC_RESIST.get()).setBaseValue(1.6f);
-                this.getAttribute(AttributeRegistry.SPELL_RESIST.get()).setBaseValue(1.7f);
+                this.getAttribute(AttributeRegistry.HOLY_MAGIC_RESIST.get()).setBaseValue(1.3f);
+                this.getAttribute(AttributeRegistry.FIRE_MAGIC_RESIST.get()).setBaseValue(1.5f);
+                this.getAttribute(AttributeRegistry.BLOOD_MAGIC_RESIST.get()).setBaseValue(1.5f);
+                this.getAttribute(AttributeRegistry.NATURE_MAGIC_RESIST.get()).setBaseValue(1.4f);
+                this.getAttribute(AttributeRegistry.ELDRITCH_MAGIC_RESIST.get()).setBaseValue(1.6f);
+                this.getAttribute(AttributeRegistry.ICE_MAGIC_RESIST.get()).setBaseValue(1.4f);
+                this.getAttribute(AttributeRegistry.LIGHTNING_MAGIC_RESIST.get()).setBaseValue(1.4f);
+                this.getAttribute(AttributeRegistry.EVOCATION_MAGIC_RESIST.get()).setBaseValue(1.3f);
+                this.getAttribute(AttributeRegistry.ENDER_MAGIC_RESIST.get()).setBaseValue(1.4f);
+                this.getAttribute(AttributeRegistry.SPELL_RESIST.get()).setBaseValue(1.5f);
             }
         }
     }
@@ -245,13 +246,12 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
                 .setMeleeAttackInverval(10, 20)
                 .setMeleeMovespeedModifier(1.7f)
                 .setSpells(
-                        List.of(SpellRegistry.ELDRITCH_BLAST_SPELL.get(), SpellRegistry.SONIC_BOOM_SPELL.get(), SpellRegistry.ABYSSAL_SHROUD_SPELL.get(), SpellRegistry.RAY_OF_FROST_SPELL.get(), SpellRegistry.SCULK_TENTACLES_SPELL.get(), SpellRegistry.ACID_ORB_SPELL.get()),
+                        List.of(SpellRegistry.ELDRITCH_BLAST_SPELL.get(), SpellRegistry.SONIC_BOOM_SPELL.get(), SpellRegistry.ABYSSAL_SHROUD_SPELL.get(), SpellRegistry.RAY_OF_FROST_SPELL.get(), SpellRegistry.SCULK_TENTACLES_SPELL.get()),
                         List.of(SpellRegistry.ASCENSION_SPELL.get(), SpellRegistry.ABYSSAL_SHROUD_SPELL.get()),
-                        List.of(SpellRegistry.BLOOD_STEP_SPELL.get(), SpellRegistry.ABYSSAL_SHROUD_SPELL.get()),
+                        List.of(SpellRegistry.BLOOD_STEP_SPELL.get()),
                         List.of(SpellRegistry.ABYSSAL_SHROUD_SPELL.get(), SpellRegistry.ECHOING_STRIKES_SPELL.get(), SpellRegistry.ROOT_SPELL.get(), SpellRegistry.BLIGHT_SPELL.get())
                 )
         );
-        this.goalSelector.addGoal(4, new SpellBarrageGoal(this, SpellRegistry.GREATER_HEAL_SPELL.get(), 1, 1, 1000, 1200, 1));
         this.goalSelector.addGoal(5, new PatrolNearLocationGoal(this, 30, .75f));
         this.goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8.0F));
     }
@@ -275,6 +275,12 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
         } else {
             spawnSummoningParticles();
         }
+
+        PortalJoinEntity portal = new PortalJoinEntity(EntityRegistry.PORTAL_JOIN_ENTITY.get(), this.level());
+        portal.setPos(this.position());
+        portal.setYRot(this.getYRot());
+        portal.yRotO = this.getYRot();
+        this.level().addFreshEntity(portal);
     }
 
     private void copyAttribute(net.minecraft.world.entity.ai.attributes.Attribute attribute) {
@@ -445,9 +451,11 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
                 lifeDrainCooldown = 150;
             }
         }
+
         if (roarSoundCooldown > 0) roarSoundCooldown--;
         if (laughSoundCooldown > 0) laughSoundCooldown--;
 
+        age++;
     }
 
     @Override
@@ -606,7 +614,9 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
     }
 
     RawAnimation animationToPlay = null;
+    private final RawAnimation ANIMATION_SPAWN = RawAnimation.begin().thenPlay("join_1");
     private final AnimationController<DarkDoppelgangerEntity> meleeController = new AnimationController<>(this, "keeper_animations", 0, this::predicate);
+    private final AnimationController<DarkDoppelgangerEntity> spawnController = new AnimationController<>(this, "spawn_animations", 0, this::spawnPredicate);
 
     @Override
     public void playAnimation(String animationId) {
@@ -620,22 +630,33 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
     private PlayState predicate(AnimationState<DarkDoppelgangerEntity> animationEvent) {
         var controller = animationEvent.getController();
 
-        if (this.animationToPlay != null) {
+        if (age > 45 && this.animationToPlay != null) {
             controller.forceAnimationReset();
             controller.setAnimation(animationToPlay);
             animationToPlay = null;
         }
-        return PlayState.CONTINUE;
+        return spawnController.getAnimationState() == AnimationController.State.STOPPED ? PlayState.CONTINUE : PlayState.STOP;
+    }
+
+    private PlayState spawnPredicate(AnimationState<DarkDoppelgangerEntity> animationEvent) {
+        var controller = animationEvent.getController();
+
+        if (age < 45) {
+            controller.setAnimation(ANIMATION_SPAWN);
+            return PlayState.CONTINUE;
+        }
+        return PlayState.STOP;
     }
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllerRegistrar) {
         controllerRegistrar.add(meleeController);
+        controllerRegistrar.add(spawnController);
         super.registerControllers(controllerRegistrar);
     }
 
     @Override
     public boolean isAnimating() {
-        return meleeController.getAnimationState() != AnimationController.State.STOPPED || super.isAnimating();
+        return meleeController.getAnimationState() != AnimationController.State.STOPPED || spawnController.getAnimationState() != AnimationController.State.STOPPED || super.isAnimating();
     }
 }

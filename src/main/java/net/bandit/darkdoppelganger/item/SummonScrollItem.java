@@ -19,6 +19,7 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,35 +80,25 @@ public class SummonScrollItem extends Item {
     }
 
     private void summonDoppelganger(ServerLevel serverWorld, Player player) {
-        double summonX = player.getX();
-        double summonY = player.getY() + 10;
-        double summonZ = player.getZ();
+        Vec3 lookVector = player.getLookAngle();
+
+        Vec3 spawnPosition = player.position().add(lookVector.scale(4));
 
         // Create the entity
         DarkDoppelgangerEntity entity = new DarkDoppelgangerEntity(EntityRegistry.DARK_DOPPELGANGER.get(), serverWorld);
-        entity.setPos(summonX, summonY, summonZ);
+        entity.setPos(spawnPosition.x, player.getY(), spawnPosition.z);
+        entity.setYRot(-player.getYRot());
 
         entity.setSummonerPlayer(player);
         entity.setCustomName(Component.literal(player.getName().getString()));
         entity.setCustomNameVisible(true);
 
-        player.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 60, 0));
         player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 60, 1));
 
         serverWorld.playSound(null, player.getX(), player.getY(), player.getZ(),
                 ModSounds.BOSS_LAUGH.get(), SoundSource.PLAYERS, 1.5F, 1.0F);
 
         serverWorld.addFreshEntity(entity);
-        serverWorld.getServer().execute(() -> {
-            double teleportX = player.getX() + (serverWorld.random.nextDouble() - 0.5) * 5.0;
-            double teleportY = player.getY();
-            double teleportZ = player.getZ() + (serverWorld.random.nextDouble() - 0.5) * 5.0;
-
-            entity.teleportTo(teleportX, teleportY, teleportZ);
-            serverWorld.playSound(null, teleportX, teleportY, teleportZ,
-                    ModSounds.BOSS_LAUGH.get(), SoundSource.HOSTILE, 1.5F, 0.8F);
-
-        });
     }
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {

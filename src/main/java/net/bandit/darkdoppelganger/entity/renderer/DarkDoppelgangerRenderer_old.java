@@ -1,4 +1,4 @@
-package net.bandit.darkdoppelganger.client.renderer;
+package net.bandit.darkdoppelganger.entity.renderer;
 
 
 import net.bandit.darkdoppelganger.entity.DarkDoppelgangerEntity;
