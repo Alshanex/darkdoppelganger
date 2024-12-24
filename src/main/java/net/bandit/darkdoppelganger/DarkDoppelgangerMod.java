@@ -1,6 +1,7 @@
 package net.bandit.darkdoppelganger;
 
 import com.mojang.logging.LogUtils;
+import net.bandit.darkdoppelganger.command.ModCommands;
 import net.bandit.darkdoppelganger.entity.EntityRegistry;
 import net.bandit.darkdoppelganger.entity.PortalJoinEntity;
 import net.bandit.darkdoppelganger.entity.PortalLeaveEntity;
@@ -42,14 +43,11 @@ public class DarkDoppelgangerMod {
     public static final String MOD_ID = "darkdoppelganger";
     public static final Logger LOGGER = LogUtils.getLogger();
 
-    public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, MOD_ID);
-    public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, MOD_ID);
-    public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MOD_ID);
     public static final DeferredRegister<EntityType<?>> ENTITY_TYPES = DeferredRegister.create(ForgeRegistries.ENTITY_TYPES, MOD_ID);
 
     public static final RegistryObject<EntityType<DarkDoppelgangerEntity>> DARK_DOPPELGANGER = ENTITY_TYPES.register("dark_doppelganger",
             () -> EntityType.Builder.of(DarkDoppelgangerEntity::new, MobCategory.MONSTER)
-                    .sized(0.6F, 1.95F)  // Player-sized entity
+                    .sized(0.6F, 1.95F)
                     .build(MOD_ID + ":dark_doppelganger")
     );
 
@@ -74,10 +72,7 @@ public class DarkDoppelgangerMod {
         modEventBus.addListener(this::addCreative);
 
 
-        BLOCKS.register(modEventBus);
-        ITEMS.register(modEventBus);
         ItemRegistry.ITEMS.register(modEventBus);
-        CREATIVE_MODE_TABS.register(modEventBus);
         ENTITY_TYPES.register(modEventBus);
         SpellRegistry.register(modEventBus);
         ModSounds.register(modEventBus);
@@ -106,5 +101,13 @@ public class DarkDoppelgangerMod {
             EntityRenderers.register(PORTAL_LEAVE_ENTITY.get(), PortalLeaveRenderer::new);
         }
     }
+    @Mod.EventBusSubscriber(modid = DarkDoppelgangerMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+    public static class CommandRegistration {
+        @SubscribeEvent
+        public static void onRegisterCommands(net.minecraftforge.event.RegisterCommandsEvent event) {
+            ModCommands.registerCommands(event.getDispatcher());
+        }
+    }
+
 }
 
