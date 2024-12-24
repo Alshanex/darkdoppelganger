@@ -27,10 +27,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.*;
-import net.minecraft.world.entity.ai.attributes.AttributeInstance;
-import net.minecraft.world.entity.ai.attributes.AttributeModifier;
-import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
-import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.attributes.*;
 import net.minecraft.world.entity.ai.control.LookControl;
 import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.ai.goal.*;
@@ -69,7 +66,6 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
     private static int currentMinionCount = 0;
     private int laughCooldown = 800;
     private int age;
-
 
 
     public DarkDoppelgangerEntity(EntityType<? extends AbstractSpellCastingMob> type, Level world) {
@@ -131,7 +127,7 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
             copyAttribute(AttributeRegistry.ENDER_SPELL_POWER.get());
             copyAttribute(AttributeRegistry.SPELL_POWER.get());
 
-            if(Config.DOPPLEGANGER_HARD_MODE.get()){
+            if (Config.DOPPLEGANGER_HARD_MODE.get()) {
                 this.getAttribute(AttributeRegistry.HOLY_MAGIC_RESIST.get()).setBaseValue(1.3f);
                 this.getAttribute(AttributeRegistry.FIRE_MAGIC_RESIST.get()).setBaseValue(1.5f);
                 this.getAttribute(AttributeRegistry.BLOOD_MAGIC_RESIST.get()).setBaseValue(1.5f);
@@ -152,7 +148,7 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
         this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true));
     }
 
-    protected void setFirstPhaseGoals(){
+    protected void setFirstPhaseGoals() {
         this.goalSelector.getRunningGoals().forEach(WrappedGoal::stop);
         this.goalSelector.removeAllGoals((x) -> true);
         this.goalSelector.addGoal(1, new FloatGoal(this));
@@ -178,7 +174,7 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
         this.goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8.0F));
     }
 
-    protected void setSecondPhaseGoals(){
+    protected void setSecondPhaseGoals() {
         this.goalSelector.getRunningGoals().forEach(WrappedGoal::stop);
         this.goalSelector.removeAllGoals((x) -> true);
         this.goalSelector.addGoal(1, new FloatGoal(this));
@@ -204,7 +200,7 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
         this.goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8.0F));
     }
 
-    protected void setThirdPhaseGoals(){
+    protected void setThirdPhaseGoals() {
         this.goalSelector.getRunningGoals().forEach(WrappedGoal::stop);
         this.goalSelector.removeAllGoals((x) -> true);
         this.goalSelector.addGoal(1, new FloatGoal(this));
@@ -230,7 +226,7 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
         this.goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8.0F));
     }
 
-    protected void setFinalPhaseGoals(){
+    protected void setFinalPhaseGoals() {
         this.goalSelector.getRunningGoals().forEach(WrappedGoal::stop);
         this.goalSelector.removeAllGoals((x) -> true);
         this.goalSelector.addGoal(1, new FloatGoal(this));
@@ -323,6 +319,31 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
         // Sync health attribute with current health
         this.setHealth(this.getMaxHealth());
     }
+    private void applyAttributesFromConfig() {
+        if (Config.DOPPELGANGER_HEALTH != null) {
+            this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(Config.DOPPELGANGER_HEALTH.get());
+        }
+        if (Config.DOPPELGANGER_ATTACK_DAMAGE != null) {
+            this.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(Config.DOPPELGANGER_ATTACK_DAMAGE.get());
+        }
+        if (Config.DOPPELGANGER_MOVEMENT_SPEED != null) {
+            this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(Config.DOPPELGANGER_MOVEMENT_SPEED.get());
+        }
+        if (Config.DOPPELGANGER_KNOCKBACK_RESISTANCE != null) {
+            this.getAttribute(Attributes.KNOCKBACK_RESISTANCE).setBaseValue(Config.DOPPELGANGER_KNOCKBACK_RESISTANCE.get());
+        }
+        if (Config.DOPPELGANGER_ARMOR != null) {
+            this.getAttribute(Attributes.ARMOR).setBaseValue(Config.DOPPELGANGER_ARMOR.get());
+        }
+        if (Config.DOPPELGANGER_FOLLOW_RANGE != null) {
+            this.getAttribute(Attributes.FOLLOW_RANGE).setBaseValue(Config.DOPPELGANGER_FOLLOW_RANGE.get());
+        }
+
+        // Sync health attribute with current health
+        this.setHealth(this.getMaxHealth());
+    }
+
+
     private void spawnSummoningParticles() {
         for (int i = 0; i < 20; i++) {
             double xOffset = (this.random.nextDouble() - 0.5) * 2;
@@ -342,6 +363,7 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
             });
         }
     }
+
     private void stopMinecraftAmbientMusic() {
         if (!level().isClientSide && level().getServer() != null) {
             // Loop through all players on the server
@@ -396,7 +418,7 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
         // Phase triggers
         if (!secondPhaseTriggered && this.getHealth() < this.getMaxHealth() * 0.2) {
             triggerSecondPhase();
-            if(Config.DOPPLEGANGER_HARD_MODE.get()){
+            if (Config.DOPPLEGANGER_HARD_MODE.get()) {
                 setThirdPhaseGoals();
             } else {
                 setSecondPhaseGoals();
@@ -404,36 +426,36 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
         }
         if (!thirdPhaseTriggered && this.getHealth() < this.getMaxHealth() * 0.2) {
             triggerThirdPhase();
-            if(Config.DOPPLEGANGER_HARD_MODE.get()){
+            if (Config.DOPPLEGANGER_HARD_MODE.get()) {
                 setFinalPhaseGoals();
             } else {
                 setThirdPhaseGoals();
             }
         }
 
-        if(Config.DOPPLEGANGER_HARD_MODE.get()){
+        if (Config.DOPPLEGANGER_HARD_MODE.get()) {
             this.addEffect(new MobEffectInstance(MobEffectRegistry.OAKSKIN.get(), 10, 8, false, false, true));
             this.addEffect(new MobEffectInstance(MobEffectRegistry.CHARGED.get(), 10, 2, false, false, true));
             this.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, 10, 0, false, false));
         }
 
-        if(Config.DOPPLEGANGER_HARD_MODE.get()){
-            if(this.tickCount % 10 == 0){
+        if (Config.DOPPLEGANGER_HARD_MODE.get()) {
+            if (this.tickCount % 10 == 0) {
                 this.level().getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(20, 10, 20)).forEach(target -> {
-                    if(target != this){
-                        if(target.hasEffect(MobEffects.DIG_SPEED)){
+                    if (target != this) {
+                        if (target.hasEffect(MobEffects.DIG_SPEED)) {
                             target.removeEffect(MobEffects.DIG_SPEED);
                         }
-                        if(target.hasEffect(MobEffectRegistry.ABYSSAL_SHROUD.get())){
+                        if (target.hasEffect(MobEffectRegistry.ABYSSAL_SHROUD.get())) {
                             target.removeEffect(MobEffectRegistry.ABYSSAL_SHROUD.get());
                         }
-                        if(target.hasEffect(MobEffectRegistry.EVASION.get())){
+                        if (target.hasEffect(MobEffectRegistry.EVASION.get())) {
                             target.removeEffect(MobEffectRegistry.EVASION.get());
                         }
-                        if(target.hasEffect(MobEffectRegistry.HASTENED.get())){
+                        if (target.hasEffect(MobEffectRegistry.HASTENED.get())) {
                             target.removeEffect(MobEffectRegistry.HASTENED.get());
                         }
-                        if(target.hasEffect(MobEffectRegistry.ECHOING_STRIKES.get())){
+                        if (target.hasEffect(MobEffectRegistry.ECHOING_STRIKES.get())) {
                             target.removeEffect(MobEffectRegistry.ECHOING_STRIKES.get());
                         }
                     }
@@ -460,7 +482,7 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
 
     @Override
     public boolean addEffect(MobEffectInstance p_147208_, @Nullable Entity p_147209_) {
-        if(!p_147208_.getEffect().isBeneficial()){
+        if (!p_147208_.getEffect().isBeneficial()) {
             return false;
         }
         return super.addEffect(p_147208_, p_147209_);
@@ -529,6 +551,7 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
                 clone.setHealth(10.0F); // Low health
                 clone.isClone = true;
                 clone.addTag("dark_doppelganger_clone");
+                clone.applyAttributesFromConfig();
                 level().addFreshEntity(clone);
 
                 level().addParticle(ParticleTypes.ENCHANT, clone.getX(), clone.getY(), clone.getZ(), 0, 1, 0);
@@ -550,6 +573,7 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
                 minion.isClone = true;
                 minion.addTag("dark_doppelganger_clone");
                 level().addFreshEntity(minion);
+                minion.applyAttributesFromConfig();
                 currentMinionCount++;
             }
         }
@@ -570,12 +594,15 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
     @Override
     public void die(@NotNull DamageSource cause) {
         super.die(cause);
+
         if (isClone) {
             synchronized (DarkDoppelgangerEntity.class) {
                 currentMinionCount = Math.max(0, currentMinionCount - 1);
             }
-            return;
+            return; // Clones should not trigger advancements or drops
         }
+
+        // Main boss logic
         musicPlaying = false;
 
         if (!this.level().isClientSide) {
@@ -587,21 +614,21 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
                     serverPlayer.getAdvancements().award(advancement, "kill");
                     serverPlayer.sendSystemMessage(Component.literal("You have slain the Dark Doppelganger!"));
                 }
-                // Drop the ring
-                this.spawnAtLocation(ItemRegistry.DOPPELGANGER_RING.get());
-
-                this.spawnAtLocation(Items.NETHER_STAR);
-                this.spawnAtLocation(Items.ECHO_SHARD, 3);
-                this.spawnAtLocation(Items.DIAMOND_BLOCK, 3);
-                this.level().addFreshEntity(new ExperienceOrb(this.level(), this.getX(), this.getY(), this.getZ(), 2500));
             }
 
-            // Stop the music for the real boss only
-            Objects.requireNonNull(this.level().getServer()).getPlayerList().getPlayers().forEach(player -> {
-                player.connection.send(new ClientboundStopSoundPacket(ModSounds.BOSS_FIGHT_MUSIC.get().getLocation(), SoundSource.MUSIC));
-            });
-            this.bossEvent.removeAllPlayers();
+            // Drop items only for the real boss
+            this.spawnAtLocation(ItemRegistry.DOPPELGANGER_RING.get());
+            this.spawnAtLocation(Items.NETHER_STAR);
+            this.spawnAtLocation(Items.ECHO_SHARD, 3);
+            this.spawnAtLocation(Items.DIAMOND_BLOCK, 3);
+            this.level().addFreshEntity(new ExperienceOrb(this.level(), this.getX(), this.getY(), this.getZ(), 2500));
         }
+
+        // Stop the music and remove players from the boss event
+        Objects.requireNonNull(this.level().getServer()).getPlayerList().getPlayers().forEach(player -> {
+            player.connection.send(new ClientboundStopSoundPacket(ModSounds.BOSS_FIGHT_MUSIC.get().getLocation(), SoundSource.MUSIC));
+        });
+        this.bossEvent.removeAllPlayers();
     }
     public static AttributeSupplier.Builder createAttributes() {
         return Mob.createMobAttributes()
