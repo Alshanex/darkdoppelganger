@@ -90,6 +90,7 @@ public class SummonScrollItem extends Item {
         entity.setYRot(-player.getYRot());
 
         entity.setSummonerPlayer(player);
+        entity.addTag("dark_doppelganger_boss");
         entity.setCustomName(Component.literal(player.getName().getString()));
         entity.setCustomNameVisible(true);
 

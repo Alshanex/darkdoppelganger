@@ -256,12 +256,13 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
     public void onAddedToWorld() {
         super.onAddedToWorld();
         this.setPersistenceRequired();
-
+        if (this.isClone) {
+            this.addTag("dark_doppelganger_clone");
+        } else {
+            this.addTag("dark_doppelganger_boss");
+        }
         if (!this.level().isClientSide && !this.isClone) {
-            // Ensure all music is stopped first
             stopAllMusic();
-
-            // Play the boss music only after stopping all other sounds
             if (!musicPlaying) {
                 this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
                         ModSounds.BOSS_FIGHT_MUSIC.get(), SoundSource.MUSIC, 1.0F, 1.0F);
@@ -271,7 +272,6 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
         } else {
             spawnSummoningParticles();
         }
-
         PortalJoinEntity portal = new PortalJoinEntity(EntityRegistry.PORTAL_JOIN_ENTITY.get(), this.level());
         portal.setPos(this.position());
         portal.setYRot(this.getYRot());
@@ -551,6 +551,7 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
                 clone.setHealth(10.0F); // Low health
                 clone.isClone = true;
                 clone.addTag("dark_doppelganger_clone");
+                clone.setCustomName(Component.literal("Doppelganger Clone").withStyle(ChatFormatting.GRAY));
                 clone.applyAttributesFromConfig();
                 level().addFreshEntity(clone);
 
@@ -572,6 +573,7 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
                 minion.setHealth(minion.getMaxHealth() * 0.3F);
                 minion.isClone = true;
                 minion.addTag("dark_doppelganger_clone");
+                minion.setCustomName(Component.literal("Doppelganger Minion").withStyle(ChatFormatting.DARK_GRAY));
                 level().addFreshEntity(minion);
                 minion.applyAttributesFromConfig();
                 currentMinionCount++;
@@ -594,15 +596,13 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
     @Override
     public void die(@NotNull DamageSource cause) {
         super.die(cause);
-
         if (isClone) {
             synchronized (DarkDoppelgangerEntity.class) {
                 currentMinionCount = Math.max(0, currentMinionCount - 1);
             }
-            return; // Clones should not trigger advancements or drops
+            return;
         }
 
-        // Main boss logic
         musicPlaying = false;
 
         if (!this.level().isClientSide) {
@@ -616,15 +616,12 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
                 }
             }
 
-            // Drop items only for the real boss
             this.spawnAtLocation(ItemRegistry.DOPPELGANGER_RING.get());
             this.spawnAtLocation(Items.NETHER_STAR);
             this.spawnAtLocation(Items.ECHO_SHARD, 3);
             this.spawnAtLocation(Items.DIAMOND_BLOCK, 3);
             this.level().addFreshEntity(new ExperienceOrb(this.level(), this.getX(), this.getY(), this.getZ(), 2500));
         }
-
-        // Stop the music and remove players from the boss event
         Objects.requireNonNull(this.level().getServer()).getPlayerList().getPlayers().forEach(player -> {
             player.connection.send(new ClientboundStopSoundPacket(ModSounds.BOSS_FIGHT_MUSIC.get().getLocation(), SoundSource.MUSIC));
         });
@@ -632,12 +629,12 @@ public class DarkDoppelgangerEntity extends AbstractSpellCastingMob implements E
     }
     public static AttributeSupplier.Builder createAttributes() {
         return Mob.createMobAttributes()
-                .add(Attributes.MAX_HEALTH, 6000.0) // Default value
-                .add(Attributes.ATTACK_DAMAGE, 20.0) // Default value
-                .add(Attributes.MOVEMENT_SPEED, 0.20) // Default value
-                .add(Attributes.KNOCKBACK_RESISTANCE, 0.6) // Default value
-                .add(Attributes.ARMOR, 20.0) // Default value
-                .add(Attributes.FOLLOW_RANGE, 64.0); // Default value
+                .add(Attributes.MAX_HEALTH, 6000.0)
+                .add(Attributes.ATTACK_DAMAGE, 20.0)
+                .add(Attributes.MOVEMENT_SPEED, 0.20)
+                .add(Attributes.KNOCKBACK_RESISTANCE, 0.6)
+                .add(Attributes.ARMOR, 20.0)
+                .add(Attributes.FOLLOW_RANGE, 64.0);
     }
 
     RawAnimation animationToPlay = null;

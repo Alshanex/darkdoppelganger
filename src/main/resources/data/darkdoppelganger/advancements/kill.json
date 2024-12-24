@@ -9,7 +9,10 @@
     "icon": {
       "item": "minecraft:nether_star"
     },
-    "frame": "challenge"
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
   },
   "parent": "darkdoppelganger:root",
   "criteria": {
@@ -18,8 +21,7 @@
       "conditions": {
         "entity": {
           "type": "darkdoppelganger:dark_doppelganger",
-          "nbt": "{Tags:[\"dark_doppelganger_clone\"]}",
-          "not": true
+          "nbt": "{Tags:[\"dark_doppelganger_boss\"]}"
         }
       }
     }
